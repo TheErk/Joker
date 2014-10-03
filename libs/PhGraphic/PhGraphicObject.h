@@ -114,7 +114,6 @@ protected:
 	bool ready();
 
 private:
-
 	int _x, _y, _z;
 	QColor _color;
 	bool _ready;
