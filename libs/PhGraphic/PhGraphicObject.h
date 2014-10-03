@@ -26,7 +26,6 @@
 class PhGraphicObject
 {
 public:
-
 	/**
 	 * @brief PhGraphicObject constructor
 	 * @param x Upper left corner coordinates of the display object
