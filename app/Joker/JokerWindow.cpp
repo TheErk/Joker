@@ -7,8 +7,6 @@
 #include <QFileDialog>
 #include <QFontDialog>
 #include <QFileOpenEvent>
-#include <QDragEnterEvent>
-#include <QMimeData>
 #include <QWindowStateChangeEvent>
 #include <QMouseEvent>
 
@@ -28,7 +26,7 @@
 #include "PeopleDialog.h"
 
 JokerWindow::JokerWindow(JokerSettings *settings) :
-	PhDocumentWindow(settings),
+	PhEditableDocumentWindow(settings),
 	ui(new Ui::JokerWindow),
 	_settings(settings),
 	_strip(settings),
@@ -132,6 +130,8 @@ JokerWindow::JokerWindow(JokerSettings *settings) :
 
 JokerWindow::~JokerWindow()
 {
+	_mediaPanel.close();
+
 	delete ui;
 }
 
@@ -193,8 +193,13 @@ void JokerWindow::setupSyncProtocol()
 	_settings->setSynchroProtocol(type);
 }
 
-bool JokerWindow::openDocument(QString fileName)
+bool JokerWindow::openDocument(const QString &fileName)
 {
+	QFileInfo info(fileName);
+	if(_settings->videoFileType().contains(info.suffix().toLower())) {
+		return openVideoFile(fileName);
+	}
+
 	/// Clear the selected people name list (except for the first document).
 	if(!_firstDoc)
 		_settings->setSelectedPeopleNameList(QStringList());
@@ -206,7 +211,7 @@ bool JokerWindow::openDocument(QString fileName)
 
 	/// If the document is opened successfully :
 	/// - Update the current document name (settings, windows title)
-	setCurrentDocument(fileName);
+	PhEditableDocumentWindow::openDocument(fileName);
 	_watcher.addPath(_doc->filePath());
 
 	/// - Load the deinterlace settings
@@ -220,7 +225,6 @@ bool JokerWindow::openDocument(QString fileName)
 	}
 	else
 		_videoEngine.close();
-
 
 	/// - Set the video aspect ratio.
 	ui->actionForce_16_9_ratio->setChecked(_doc->forceRatio169());
@@ -236,21 +240,6 @@ bool JokerWindow::eventFilter(QObject * sender, QEvent *event)
 {
 	/// The event filter catch the following event:
 	switch (event->type()) {
-	case QEvent::FileOpen: /// - FileOpen : To process a file dragged on the application dock icon (MacOS)
-		{
-#warning /// @todo move to PhDocumentWindow
-			QString filePath = static_cast<QFileOpenEvent *>(event)->file();
-			QString fileType = filePath.split(".").last().toLower();
-			// As the plist file list all the supported format
-			// if the file is not a strip file, it's a video file, we don't need any protection
-			if(_settings->stripFileType().contains(fileType)) {
-				if(checkSaveFile())
-					openDocument(filePath);
-			}
-			else if(_settings->videoFileType().contains(fileType))
-				openVideoFile(filePath);
-			break;
-		}
 	case QEvent::MouseMove: /// - Mouse move show the media panel
 	case QEvent::HoverEnter:
 	case QEvent::HoverMove:
@@ -269,27 +258,6 @@ bool JokerWindow::eventFilter(QObject * sender, QEvent *event)
 			if(_resizingStrip && (mouseEvent->buttons() & Qt::LeftButton)) {
 				PHDEBUG << "resizing strip:" << mouseEvent->pos();
 				_settings->setStripHeight(1.0 - ((float) mouseEvent->pos().y() /(float) this->height()));
-			}
-			break;
-		}
-	case QEvent::DragEnter: /// - Accept and process a file drop on the window
-		event->accept();
-		break;
-	case QEvent::Drop:
-		{
-#warning /// @todo move to PhDocumentWindow
-			const QMimeData* mimeData = static_cast<QDropEvent *>(event)->mimeData();
-
-			// If there is one file (not more) we open it
-			if (mimeData->urls().length() == 1) {
-				QString filePath = mimeData->urls().first().toLocalFile();
-				QString fileType = filePath.split(".").last().toLower();
-				if(fileType == "detx" or fileType == "strip" or fileType == "joker") {
-					if(checkSaveFile())
-						openDocument(filePath);
-				}
-				else if (fileType == "avi" or fileType == "mov")
-					openVideoFile(filePath);
 			}
 			break;
 		}
@@ -317,6 +285,13 @@ bool JokerWindow::eventFilter(QObject * sender, QEvent *event)
 			   && (mouseEvent->pos().y() < (this->height() - stripHeight) + 10)) {
 				PHDEBUG << "start resizing strip";
 				_resizingStrip = true;
+			}
+		}
+	case QEvent::KeyPress:
+		{
+			QKeyEvent *keyEvent = (QKeyEvent*)event;
+			if(keyEvent->key() == Qt::Key_Space) {
+				on_actionPlay_pause_triggered();
 			}
 		}
 	default:
@@ -348,20 +323,11 @@ void JokerWindow::onApplicationDeactivate()
 	hideMediaPanel();
 }
 
-void JokerWindow::closeEvent(QCloseEvent *event)
-{
-	/// Check if the current document has to be saved (it might cancel the action).
-	if(!checkSaveFile())
-		event->ignore();
-	else /// Close the PhMediaPanel.
-		_mediaPanel.close();
-}
-
 void JokerWindow::on_actionOpen_triggered()
 {
 	hideMediaPanel();
 
-	if(checkSaveFile()) {
+	if(checkDocumentModification()) {
 		QString filter = tr("Rythmo files") + " (";
 		foreach(QString type, _settings->stripFileType())
 			filter += "*." + type + " ";
@@ -735,37 +701,16 @@ void JokerWindow::on_actionSave_as_triggered()
 	if(fileName != "") {
 		if(_doc->saveStripFile(fileName, currentTime())) {
 			_doc->setModified(false);
-			setCurrentDocument(fileName);
+			PhEditableDocumentWindow::saveDocument(fileName);
 		}
 		else
 			QMessageBox::critical(this, "", tr("Unable to save ") + fileName);
 	}
 }
 
-bool JokerWindow::checkSaveFile()
+bool JokerWindow::isDocumentModified()
 {
-
-	if(_doc->modified()) {
-		/// If the document need to be saved, ask the user
-		/// whether he wants to save his changes.
-		QString msg = tr("Do you want to save your changes ?");
-		QMessageBox box(QMessageBox::Question, "", msg, QMessageBox::Save | QMessageBox::No | QMessageBox::Cancel);
-		box.setDefaultButton(QMessageBox::Save);
-		switch(box.exec()) {
-		/// Cancel the caller action if clicking cancel.
-		case QMessageBox::Cancel:
-			return false;
-		/// Trigger the document save if clicking save:
-		case QMessageBox::Save:
-			on_actionSave_triggered();
-			/// If the user cancel the save operation, cancel the operation.
-			if(_doc->modified())
-				return false;
-			break;
-		}
-	}
-	/// @return False to interrupt the caller action, true otherwhise.
-	return true;
+	return _doc->modified();
 }
 
 void JokerWindow::on_actionSelect_character_triggered()
@@ -1094,4 +1039,9 @@ void JokerWindow::on_actionDisplay_the_control_panel_triggered(bool checked)
 void JokerWindow::on_actionDisplay_the_information_panel_triggered(bool checked)
 {
 	_settings->setDisplayNextText(checked);
+}
+
+void JokerWindow::on_actionHide_selected_peoples_triggered(bool checked)
+{
+	_settings->setHideSelectedPeoples(checked);
 }

@@ -50,14 +50,14 @@ GraphicStripTestWindow::~GraphicStripTestWindow()
 	delete ui;
 }
 
-bool GraphicStripTestWindow::openDocument(QString fileName)
+bool GraphicStripTestWindow::openDocument(const QString &fileName)
 {
 	PHDEBUG << fileName;
 	if(!_doc->openStripFile(fileName))
 		return false;
 
 	_settings->setGenerate(false);
-	setCurrentDocument(fileName);
+	openDocument(fileName);
 	return true;
 }
 
@@ -102,7 +102,7 @@ void GraphicStripTestWindow::onGenerate()
 		else {
 			_clock->setTime(_doc->lastTime());
 			_settings->setGenerate(true);
-			setCurrentDocument("");
+			openDocument("");
 		}
 	}
 

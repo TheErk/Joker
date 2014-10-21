@@ -9,8 +9,7 @@
 
 PropertyDialog::PropertyDialog(QWidget *parent) :
 	QDialog(parent),
-	ui(new Ui::PropertyDialog),
-	_doc(NULL)
+	ui(new Ui::PropertyDialog)
 {
 	ui->setupUi(this);
 }
@@ -20,11 +19,6 @@ PropertyDialog::~PropertyDialog()
 	delete ui;
 }
 
-void PropertyDialog::setDoc(PhStripDoc *doc)
-{
-	_doc = doc;
-}
-
 void PropertyDialog::setVideoEngine(PhVideoEngine *videoEngine)
 {
 	_videoEngine = videoEngine;
@@ -32,13 +26,6 @@ void PropertyDialog::setVideoEngine(PhVideoEngine *videoEngine)
 
 void PropertyDialog::showEvent(QShowEvent *)
 {
-	ui->titleLabel->setText("-");
-	ui->tcInLabel->setText("-");
-	ui->tcOutLabel->setText("-");
-	ui->authorLabel->setText("-");
-	ui->peopleNumberLabel->setText("-");
-	ui->charNumberLabel->setText("-");
-
 	ui->videoFileLabel->setText("-");
 	ui->videoTCInLabel->setText("-");
 	ui->videoTCOutLabel->setText("-");
@@ -47,29 +34,6 @@ void PropertyDialog::showEvent(QShowEvent *)
 	ui->codecNameLabel->setText("-");
 
 	PhTimeCodeType tcType = _videoEngine->timeCodeType();
-
-	if(_doc) {
-		ui->titleLabel->setText(_doc->title());
-
-		if(_doc->authorName().length())
-			ui->authorLabel->setText(_doc->authorName());
-
-		PhTime timeIn = _doc->timeIn();
-		if(timeIn > 0)
-			ui->tcInLabel->setText(PhTimeCode::stringFromTime(timeIn, tcType));
-
-		PhTime timeOut = _doc->timeOut();
-		if(timeOut > 0)
-			ui->tcOutLabel->setText(PhTimeCode::stringFromTime(timeOut, tcType));
-
-		int peopleNumber = _doc->peoples().count();
-		ui->peopleNumberLabel->setText(QString::number(peopleNumber));
-
-		int charNumber = 0;
-		foreach(PhStripText * text, _doc->texts())
-			charNumber += text->content().length();
-		ui->charNumberLabel->setText(QString::number(charNumber));
-	}
 
 	if(_videoEngine) {
 		if(_videoEngine->fileName().length())

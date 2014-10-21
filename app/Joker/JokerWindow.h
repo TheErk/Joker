@@ -12,7 +12,7 @@
 #include <QTimer>
 
 #include "PhCommonUI/PhFloatingMediaPanel.h"
-#include "PhCommonUI/PhDocumentWindow.h"
+#include "PhCommonUI/PhEditableDocumentWindow.h"
 #include <PhVideo/PhVideoEngine.h>
 #include <PhGraphicStrip/PhGraphicStrip.h>
 #include "PhSync/PhSynchronizer.h"
@@ -40,7 +40,7 @@ class JokerWindow;
 /// - Handling controls command
 /// - Connect the application modules: PhVideoEngine, PhGraphicStrip, Synchronizer, PhSonySlaveController, PhLtcReader
 ///
-class JokerWindow : public PhDocumentWindow
+class JokerWindow : public PhEditableDocumentWindow
 {
 	Q_OBJECT
 
@@ -79,7 +79,7 @@ protected:
 	///
 	/// @param filePath The file path
 	///
-	bool openDocument(QString filePath);
+	bool openDocument(const QString &filePath);
 
 	///
 	/// @brief Custom event filter
@@ -146,16 +146,9 @@ protected:
 	void setupSyncProtocol();
 
 	///
-	/// @brief Event called when the user try to close the window.
+	/// @brief Check if the current document has been modified.
 	///
-	/// @param event The event
-	///
-	void closeEvent(QCloseEvent *event);
-
-	///
-	/// @brief Check if the current document need to be save.
-	///
-	bool checkSaveFile();
+	bool isDocumentModified();
 
 private slots:
 	// Qt Designer slots
@@ -261,6 +254,8 @@ private slots:
 	void on_actionDisplay_the_control_panel_triggered(bool checked);
 
 	void on_actionDisplay_the_information_panel_triggered(bool checked);
+
+	void on_actionHide_selected_peoples_triggered(bool checked);
 
 private:
 	PhTime currentTime();
