@@ -70,29 +70,5 @@ go_bandit([](){
 
 			w.close();
 		});
-
-		it("has_current_document", [&](){
-			WindowSpecSettings settings(true);
-
-			settings.setCurrentDocument("text.txt");
-
-			WindowSpecWindow w(&settings);
-			w.processArg(0, NULL);
-			AssertThat(w.text().toStdString(), Equals("bonjour"));
-		});
-
-		it("handle_last_folder", [&](){
-			WindowSpecSettings settings(true);
-
-			WindowSpecWindow w(&settings);
-			w.processArg(0, NULL);
-
-			AssertThat(settings.lastDocumentFolder().toStdString(), Equals(QDir::homePath().toStdString()));
-
-			w.openDocument("text.txt");
-
-			QString currentFolder = QDir::currentPath();
-			AssertThat(settings.lastDocumentFolder().toStdString(), Equals(currentFolder.toStdString()));
-		});
 	});
 });
