@@ -10,3 +10,4 @@
 #include <QMimeData>
 #include <QFileSystemWatcher>
 #include <iostream>
+#include <QTextStream>
