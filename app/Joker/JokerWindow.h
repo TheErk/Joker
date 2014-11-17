@@ -83,6 +83,8 @@ protected:
 	///
 	bool openDocument(const QString &filePath);
 
+	virtual void  onExternalChange(const QString &path);
+
 	///
 	/// @brief Custom event filter
 	///

@@ -79,7 +79,7 @@ public slots:
 	 * Handle external changes and reload the file.
 	 * @param path
 	 */
-	void onExternalChange(const QString &path);
+	virtual void onExternalChange(const QString &path);
 
 protected slots:
 	/**
