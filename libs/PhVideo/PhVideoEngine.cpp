@@ -209,7 +209,7 @@ void PhVideoEngine::setTimeIn(PhTime timeIn)
 
 PhTime PhVideoEngine::length()
 {
-	if(_videoStream)
+	if(_videoStream && (_videoStream->duration > 0))
 		return AVTimestamp_to_PhTime(_videoStream->duration);
 	return 0;
 }
@@ -264,8 +264,8 @@ bool PhVideoEngine::decodeFrame(PhTime time)
 
 	if(time < _timeIn)
 		time = _timeIn;
-	if (time >= this->timeOut())
-		time = this->timeOut();
+//	if (time >= this->timeOut())
+//		time = this->timeOut();
 
 	bool result = false;
 

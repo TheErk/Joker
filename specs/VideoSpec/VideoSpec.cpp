@@ -13,6 +13,8 @@
 
 #define FRAME_WAIT_TIME 40
 
+#include "CommonSpec.h"
+
 #include "PhSpec.h"
 
 using namespace bandit;
@@ -24,7 +26,7 @@ go_bandit([](){
 		VideoSpecSettings settings;
 
 		before_each([&](){
-			PhDebug::disable();
+			//PhDebug::disable();
 
 			view = new PhGraphicView(64, 64);
 			engine = new PhVideoEngine(&settings);
@@ -132,7 +134,7 @@ go_bandit([](){
 			}
 		});
 
-		it("play", [&](){
+		it("play bmp", [&](){
 			AssertThat(engine->open("video/interlace_%03d.bmp"), IsTrue());
 
 			QThread::msleep(FRAME_WAIT_TIME);
@@ -143,7 +145,6 @@ go_bandit([](){
 
 			QThread::msleep(FRAME_WAIT_TIME);
 			AssertThat(view->renderPixmap(64, 64).toImage() == QImage("video/interlace_001.bmp"), IsTrue());
-
 
 			// Play 1 second
 			for(int i = 0; i < 25; i++) {
@@ -164,6 +165,44 @@ go_bandit([](){
 				QThread::msleep(FRAME_WAIT_TIME);
 			}
 			AssertThat(view->renderPixmap(64, 64).toImage() == QImage("video/interlace_000.bmp"), IsTrue());
+		});
+
+		it("play mkv", [&](){
+			AssertThat(engine->open("video/interlace.mkv"), IsTrue());
+
+			QThread::msleep(FRAME_WAIT_TIME);
+
+			AssertThat(engine->timeCodeType(), Equals(PhTimeCodeType25));
+			AssertThat(t2s(engine->timeIn(), PhTimeCodeType25), Equals("01:00:00:00"));
+//			AssertThat(t2s(engine->timeOut(), PhTimeCodeType25), Equals("01:00:04:00"));
+
+			AssertThat(view->renderPixmap(64, 64).toImage() == QImage("video/interlace_000.bmp"), IsTrue());
+
+			engine->clock()->setRate(1);
+			engine->clock()->elapse(960); // 1 frame at 25 fps
+
+			QThread::msleep(FRAME_WAIT_TIME);
+//			AssertThat(view->renderPixmap(64, 64).toImage() == QImage("video/interlace_001.bmp"), IsTrue());
+
+//			// Play 1 second
+//			for(int i = 0; i < 25; i++) {
+//				engine->clock()->elapse(960); // 1 frame at 25 fps
+//				QThread::msleep(FRAME_WAIT_TIME);
+//			}
+
+//			AssertThat(view->renderPixmap(64, 64).toImage() == QImage("video/interlace_026.bmp"), IsTrue());
+
+//			engine->clock()->setRate(-1);
+//			engine->clock()->elapse(960); // 1 frame at 25 fps
+//			QThread::msleep(FRAME_WAIT_TIME);
+//			AssertThat(view->renderPixmap(64, 64).toImage() == QImage("video/interlace_025.bmp"), IsTrue());
+
+//			// Play 1 second
+//			for(int i = 24; i >= 0; i--) {
+//				engine->clock()->elapse(960); // 1 frame at 25 fps
+//				QThread::msleep(FRAME_WAIT_TIME);
+//			}
+//			AssertThat(view->renderPixmap(64, 64).toImage() == QImage("video/interlace_000.bmp"), IsTrue());
 		});
 
 		it("deinterlace", [&](){
