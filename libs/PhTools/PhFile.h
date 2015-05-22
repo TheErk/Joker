@@ -7,6 +7,7 @@
 #include <QDir>
 #include <QStandardPaths>
 #include <QFileInfo>
+#include <QTemporaryFile>
 #include <QMimeData>
 #include <QFileSystemWatcher>
 #include <iostream>

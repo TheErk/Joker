@@ -54,58 +54,43 @@ void PhFeedbackDialog::on_buttonBox_accepted()
 	if(!ui->textEditComment->toPlainText().isEmpty())
 		header += "Message : " + ui->textEditComment->toPlainText() + "\n";
 
-
 	// Get the system infos
-	QString tempFileName(tmpnam(NULL));
+	QString commandString;
 #if defined(Q_OS_MAC)
-	system(PHNQ(QString("/usr/sbin/system_profiler SPHardwareDataType > %1").arg(tempFileName)));
-	QFile systemInfoFile(tempFileName);
-	if(!systemInfoFile.open(QIODevice::ReadOnly))
-		PHDEBUG << systemInfoFile.errorString();
-	else {
-		QTextStream in(&systemInfoFile);
-		while(!in.atEnd()) {
-			systemConfig += in.readLine() + "\n";
-		}
-		systemInfoFile.close();
-		system(PHNQ(QString("rm %1").arg(tempFileName)));
-	}
+	commandString = "/usr/sbin/system_profiler SPHardwareDataType";
 #else
-	system(PHNQ(QString("rm %1").arg(tempFileName)));
+	commandString = "echo Not handled in Window and Linux.";
 #endif
 
-	// Get the preferences
-	system(PHNQ(QString("defaults read com.Phonations.%1 > %2").arg(QString(APP_NAME)).arg(tempFileName)));
-	QFile preferencesFile(tempFileName);
-	if(!preferencesFile.open(QIODevice::ReadOnly)) {
-		PHDEBUG << preferencesFile.errorString();
-	}
-	else {
-		QTextStream in(&preferencesFile);
-		while(!in.atEnd()) {
-			preferences += in.readLine() + "\n";
-		}
-		preferencesFile.close();
-		system(PHNQ(QString("rm %1").arg(tempFileName)));
+	QProcess process;
+	process.start(commandString);
+	if(process.waitForFinished()) {
+		systemConfig = QString(process.readAllStandardOutput());
 	}
 
+	// Get the preferences
+#if defined(Q_OS_MAC)
+	commandString = QString("defaults read com.Phonations.%1").arg(QString(APP_NAME));
+#else
+	commandString = "echo Not handled in Window and Linux.";
+#endif
+
+	process.start(commandString);
+	if(process.waitForFinished()) {
+		preferences = QString(process.readAllStandardOutput());
+	}
 
 	// Get the application log
-	QFile applicationLogFile(QDir::homePath() + "/Library/Logs/Phonations/" + APP_NAME + ".log");
-	if(!applicationLogFile.open(QIODevice::ReadOnly)) {
-		PHDEBUG << applicationLogFile.errorString();
-	}
-	else {
-		QTextStream in(&applicationLogFile);
-		while(!in.atEnd()) {
-			appLog += in.readLine()  + "\n";
-		}
-		// Stripping only the end of the log
-		if(appLog.length() > 10000)
-			appLog = appLog.mid(appLog.length() - 10000);
-		applicationLogFile.close();
-	}
+#if defined(Q_OS_MAC)
+	commandString = QString("tail -n 100 %1/Library/Logs/%2/%3.log").arg(QDir::homePath()).arg(ORG_NAME).arg(QString(APP_NAME));
+#else
+	commandString = "echo Not handled in Window and Linux.";
+#endif
 
+	process.start(commandString);
+	if(process.waitForFinished()) {
+		appLog = QString(process.readAllStandardOutput());
+	}
 
 	// Get the crash log
 	QString crashFolder = QDir::homePath() + "/Library/Logs/DiagnosticReports/";
