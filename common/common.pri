@@ -37,6 +37,10 @@ win32 {
 	}
 	DEFINES += PATH_TO_RESSOURCES=\\\"\\\"
 
+	!exists($$(BOOST_PATH)) {
+			error("You must define BOOST_PATH")
+	}
+
 	INCLUDEPATH += $$(BOOST_PATH)
 }
 
