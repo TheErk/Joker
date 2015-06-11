@@ -8,7 +8,11 @@ CONFIG(release, debug|release) {
 			if(equals(PH_GIT_BRANCH, "master")) {
 				PH_DEPLOY_TARGET = $${TARGET}_v$${VERSION}
 			} else {
-				PH_DEPLOY_TARGET = $${TARGET}_v$${VERSION}_$${PH_GIT_BRANCH}
+				if(equals(PH_GIT_BRANCH, "HEAD")) {
+					PH_DEPLOY_TARGET = $${TARGET}_v$${VERSION}
+				} else {
+					PH_DEPLOY_TARGET = $${TARGET}_v$${VERSION}_$${PH_GIT_BRANCH}
+				}
 			}
 
 			message($$PH_DEPLOY_TARGET)
