@@ -150,7 +150,11 @@ private slots:
 
 private:
 	static void callback(double, std::vector< unsigned char > *message, void *userData );
+#ifndef RTMIDI_PRE211_API
 	static void errorCallback(RtMidiError::Type type, const std::string &errorText, void *userData);
+#else
+        static void errorCallback(RtMidiError::Type type, const std::string &errorText);
+#endif
 
 	RtMidiIn *_midiIn;
 	bool _force24as2398;

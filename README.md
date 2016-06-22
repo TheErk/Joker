@@ -89,9 +89,31 @@ You can install most of the dependencies via *brew*:
 
 ### <a name="linux"></a> Linux:
 
-Just run the *bootstrap* script:
+- Beware of git submodules
+  When you clone Joker repo do not forget to use recursive i.e. git clone --recursive
+  otherwise you'll have to get submodules updated manually:
+  - Initialize git submodules if not already done:
+     - git submodule init
+     - git submodule update
+  - Beware of the fact that bandit uses submodules as well so you have to:
+     - cd vendor/bandit
+     - git submodule init; git submodule update
 
-    ./scripts/bootstrap.sh
+- Install dependencies:
+  Depending on your Linux distribution you should be able to install the dependencies using you favorite package manager:
+
+  - Fedora/CentOS: yum or dnf.
+  - Debian: apt, apt-get or aptitude.
+      apt install libavutil-dev portaudio19-dev ffmpeg qt5-default libltc-dev
+
+- Run qmake
+  When running qmake you can chose the compiler you will be using with
+  - qmake -spec linux-clang for using clang
+  - qmake -spec linux-g++ for using g++
+  - qmake then the default compiler will be picked-up.
+- Run make
+  You may speed-up the building (on multi-core host) by using
+  make -j 
 
 ### <a name="windows"></a> Windows:
 

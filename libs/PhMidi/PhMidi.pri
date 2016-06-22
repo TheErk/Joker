@@ -17,9 +17,10 @@ SOURCES += \
 	$$PWD/PhMidiTimeCodeWriter.cpp \
 	$$PWD/PhMidiTimeCodeReader.cpp
 
-INCLUDEPATH += $$TOP_ROOT/vendor/rtmidi
+
 
 mac {
+INCLUDEPATH += $$TOP_ROOT/vendor/rtmidi
 HEADERS += $$TOP_ROOT/vendor/rtmidi/RtMidi.h
 SOURCES += $$TOP_ROOT/vendor/rtmidi/RtMidi.cpp
 DEFINES += __MACOSX_CORE__
@@ -27,10 +28,12 @@ LIBS += -framework CoreMIDI -framework CoreAudio -framework CoreFoundation
 }
 
 linux {
+DEFINES += RTMIDI_PRE211_API
 LIBS += -lrtmidi
 }
 
 win32 {
+INCLUDEPATH += $$TOP_ROOT/vendor/rtmidi
 HEADERS += $$TOP_ROOT/vendor/rtmidi/RtMidi.h
 SOURCES += $$TOP_ROOT/vendor/rtmidi/RtMidi.cpp
 DEFINES += __WINDOWS_MM__

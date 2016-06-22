@@ -61,7 +61,11 @@ bool PhMidiInput::open(QString inputPortName)
 			_midiIn->openVirtualPort(inputPortName.toStdString());
 		_midiIn->ignoreTypes( false, false, false );
 		_midiIn->setCallback(&PhMidiInput::callback, this);
+#ifndef  RTMIDI_PRE211_API
 		_midiIn->setErrorCallback(&PhMidiInput::errorCallback, this);
+#else
+                _midiIn->setErrorCallback(&PhMidiInput::errorCallback);
+#endif
 		return true;
 	}
 	catch(RtMidiError &error) {
@@ -266,6 +270,7 @@ void PhMidiInput::onError(RtMidiError::Type type, QString errorText)
 	PHERR << "Error:" << type << errorText;
 }
 
+
 void PhMidiInput::callback(double, std::vector<unsigned char> *message, void *userData)
 {
 	PhMidiInput *midiInput = (PhMidiInput*)userData;
@@ -273,9 +278,19 @@ void PhMidiInput::callback(double, std::vector<unsigned char> *message, void *us
 		midiInput->onMessage(message);
 }
 
+/* RtMidi error callback may not have user data prior to 2.1.1 */
+#ifndef RTMIDI_PRE211_API
 void PhMidiInput::errorCallback(RtMidiError::Type type, const std::string &errorText, void *userData)
 {
 	PhMidiInput *midiInput = (PhMidiInput*)userData;
 	if(midiInput)
 		midiInput->onError(type, QString::fromStdString(errorText));
 }
+#else
+void PhMidiInput::errorCallback(RtMidiError::Type type, const std::string &errorText)
+{
+	PhMidiInput *midiInput = (PhMidiInput*)NULL;
+	if(midiInput)
+		midiInput->onError(type, QString::fromStdString(errorText));
+}
+#endif
